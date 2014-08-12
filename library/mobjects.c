@@ -47,6 +47,8 @@
 
 #include "react/eblob_react.h"
 
+#include <handystats/measuring_points.h>
+
 #if !defined(_D_EXACT_NAMLEN) && (defined(__FreeBSD__) || defined(__APPLE__))
 #define _D_EXACT_NAMLEN(d) ((d)->d_namlen)
 #endif
@@ -658,8 +660,10 @@ int eblob_cache_insert(struct eblob_backend *b, struct eblob_key *key,
 	}
 
 	/* Bump counters only if entry was added and not replaced */
-	if (err == 0 && replaced == 0)
+	if (err == 0 && replaced == 0) {
 		eblob_stat_add(b->stat, EBLOB_GST_CACHED, entry_size);
+		HANDY_COUNTER_INCREMENT("eblob.cache.size", 1);
+	}
 
 err_out_exit:
 	pthread_rwlock_unlock(&b->hash.root_lock);
@@ -680,8 +684,10 @@ int eblob_cache_remove_nolock(struct eblob_backend *b, struct eblob_key *key)
 		entry_size = EBLOB_HASH_ENTRY_SIZE;
 	}
 
-	if (err == 0)
+	if (err == 0) {
 		eblob_stat_sub(b->stat, EBLOB_GST_CACHED, entry_size);
+		HANDY_COUNTER_DECREMENT("eblob.cache.size", 1);
+	}
 
 	return err;
 }
@@ -700,6 +706,7 @@ int eblob_cache_lookup(struct eblob_backend *b, struct eblob_key *key,
 		struct eblob_ram_control *res, int *diskp)
 {
 	react_start_action(ACTION_EBLOB_CACHE_LOOKUP);
+	HANDY_TIMER_SCOPE("eblob.cache.lookup", pthread_self());
 
 	int err = 1, disk = 0;
 

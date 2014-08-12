@@ -27,7 +27,7 @@ set_target_properties(eblob PROPERTIES
     LINKER_LANGUAGE CXX
     )
 
-target_link_libraries(eblob ${EBLOB_LIBRARIES} ${Boost_SYSTEM_LIBRARIES} eblob_react rt)
+target_link_libraries(eblob ${EBLOB_LIBRARIES} ${Boost_SYSTEM_LIBRARIES} eblob_react rt handystats)
 
 install(TARGETS eblob
     LIBRARY DESTINATION lib${LIB_SUFFIX}

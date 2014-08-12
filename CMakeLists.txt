@@ -17,6 +17,10 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 include(cmake/Modules/locate_library.cmake)
 locate_library(REACT "react/react.hpp" "react")
 
+locate_library(HANDYSTATS "handystats/operation.hpp" "handystats")
+include_directories(${HANDYSTATS_INCLUDE_DIRS})
+link_directories(${HANDYSTATS_LIBRARY_DIRS})
+
 include(CheckAtomic)
 include(CheckSymbolExists)
 

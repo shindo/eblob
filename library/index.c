@@ -51,6 +51,8 @@
 
 #include "react/eblob_react.h"
 
+#include <handystats/measuring_points.h>
+
 
 int eblob_key_sort(const void *key1, const void *key2)
 {
@@ -335,6 +337,7 @@ static struct eblob_disk_control *eblob_find_on_disk(struct eblob_backend *b,
 		struct eblob_disk_search_stat *st)
 {
 	react_start_action(ACTION_EBLOB_FIND_ON_DISK);
+	HANDY_TIMER_SCOPE("eblob.disk.index.lookup", pthread_self());
 
 	struct eblob_disk_control *sorted, *end, *sorted_orig, *start, *found = NULL;
 	struct eblob_disk_control *search_start, *search_end;
@@ -552,6 +555,13 @@ static char *eblob_dump_search_stat(const struct eblob_disk_search_stat *st, int
 			 st->found_index_block, st->no_block, st->bsearch_reached, st->bsearch_found,
 			 st->additional_reads, err);
 
+	HANDY_GAUGE_SET("eblob.disk.index.lookup.bases", st->loops);
+	HANDY_GAUGE_SET("eblob.disk.index.lookup.unsorted", st->no_sort);
+	HANDY_GAUGE_SET("eblob.disk.index.lookup.bloom_negative", st->bloom_null);
+	HANDY_GAUGE_SET("eblob.disk.index.lookup.bsearch_block.positive", st->found_index_block);
+	HANDY_GAUGE_SET("eblob.disk.index.lookup.bsearch_block.negative", st->no_block);
+	HANDY_GAUGE_SET("eblob.disk.index.lookup.bsearch_key_miss", st->additional_reads);
+
 	return ss;
 }
 
@@ -559,6 +569,8 @@ int eblob_disk_index_lookup(struct eblob_backend *b, struct eblob_key *key,
 		struct eblob_ram_control *rctl)
 {
 	react_start_action(ACTION_EBLOB_DISK_INDEX_LOOKUP);
+
+	HANDY_TIMER_SCOPE("eblob.disk.index.lookup.total", pthread_self());
 
 	struct eblob_base_ctl *bctl;
 	struct eblob_disk_control *dc, tmp = { .key = *key, };
